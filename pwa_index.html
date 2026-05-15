@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a73e8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Caisse" />
+  <title>Caisse Enregistreuse</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; }
+
+    header {
+      background: #1a73e8; color: white;
+      padding: 14px 16px 10px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    header .row { display: flex; justify-content: space-between; align-items: flex-start; }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header .subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+    header .total { text-align: right; }
+    header .total .montant { font-size: 22px; font-weight: 700; }
+    header .total .tva { font-size: 11px; opacity: 0.85; }
+
+    .tabs { display: flex; background: white; border-bottom: 1px solid #e0e0e0; }
+    .tab {
+      flex: 1; padding: 12px 0; font-size: 14px; font-weight: 500;
+      border: none; background: none; cursor: pointer; color: #666;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+
+    .content { padding: 0 0 80px; }
+
+    .produit-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; background: white; border-bottom: 1px solid #f0f0f0;
+    }
+    .produit-info .nom { font-size: 15px; font-weight: 400; }
+    .produit-info .prix { font-size: 13px; color: #666; margin-top: 2px; }
+    .qte-ctrl { display: flex; align-items: center; }
+    .qte-btn {
+      width: 36px; height: 36px; border: 1.5px solid #1a73e8;
+      background: white; color: #1a73e8; font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-weight: 300;
+    }
+    .qte-btn:first-child { border-radius: 8px 0 0 8px; }
+    .qte-btn:last-child { border-radius: 0 8px 8px 0; }
+    .qte-val {
+      width: 40px; height: 36px; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 600; border-top: 1.5px solid #1a73e8; border-bottom: 1.5px solid #1a73e8;
+      background: #e8f0fe; color: #1a73e8;
+    }
+    .qte-val.zero { background: #f5f5f5; color: #aaa; }
+
+    .commande-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 16px; background: white; border-bottom: 1px solid #f0f0f0;
+    }
+    .commande-row .nom { font-size: 15px; font-weight: 500; }
+    .commande-row .detail { font-size: 13px; color: #666; margin-top: 2px; }
+    .commande-row .sous-total { font-size: 15px; font-weight: 600; }
+
+    .recap {
+      margin: 12px 16px;
+      background: white; border-radius: 12px; padding: 14px 16px;
+      border: 1px solid #e0e0e0;
+    }
+    .recap-line { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; color: #444; }
+    .recap-line.total { border-top: 1px solid #e0e0e0; margin-top: 6px; padding-top: 10px; font-size: 17px; font-weight: 700; color: #111; }
+
+    .empty { text-align: center; padding: 48px 16px; color: #999; font-size: 14px; }
+
+    .btn-reinit {
+      display: block; width: calc(100% - 32px); margin: 12px 16px;
+      padding: 14px; font-size: 15px; font-weight: 500;
+      background: white; color: #d32f2f; border: 1.5px solid #d32f2f;
+      border-radius: 10px; cursor: pointer;
+    }
+
+    .badge {
+      display: inline-block; background: #1a73e8; color: white;
+      font-size: 11px; font-weight: 700; border-radius: 10px;
+      padding: 1px 6px; margin-left: 4px; vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="row">
+    <div>
+      <h1>🧾 Caisse</h1>
+      <div class="subtitle" id="nb-articles">0 article</div>
+    </div>
+    <div class="total">
+      <div class="montant" id="header-total">0,00 €</div>
+      <div class="tva" id="header-tva">TVA 5,5% : 0,00 €</div>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tab-produits" onclick="afficherTab('produits')">Produits</button>
+  <button class="tab" id="tab-commande" onclick="afficherTab('commande')">Commande <span class="badge" id="badge-nb" style="display:none">0</span></button>
+</div>
+
+<div class="content" id="contenu"></div>
+
+<script>
+const PRODUITS = [
+  { nom: "Plat du jour + riz",              prix: 12.00 },
+  { nom: "Plat du jour",                    prix: 11.00 },
+  { nom: "Accompagnement",                  prix: 7.50  },
+  { nom: "Salade",                          prix: 9.00  },
+  { nom: "Soupe",                           prix: 12.00 },
+  { nom: "Friture / rouleau de printemps",  prix: 7.50  },
+  { nom: "Plateau 4 personnes",             prix: 20.00 },
+  { nom: "Plateau 8 personnes",             prix: 40.00 },
+  { nom: "Dessert",                         prix: 4.00  },
+  { nom: "Soda",                            prix: 2.00  },
+  { nom: "Bière",                           prix: 3.00  },
+  { nom: "Vin",                             prix: 15.00 },
+];
+
+const qtés = {};
+PRODUITS.forEach(p => qtés[p.nom] = 0);
+
+let tabActif = "produits";
+
+function fmt(n) {
+  return n.toFixed(2).replace(".", ",") + " €";
+}
+
+function calculs() {
+  const lignes = PRODUITS.filter(p => qtés[p.nom] > 0);
+  const total = lignes.reduce((s, p) => s + p.prix * qtés[p.nom], 0);
+  const tva = total - total * 0.945;
+  const nb = lignes.reduce((s, p) => s + qtés[p.nom], 0);
+  return { lignes, total, tva, nb };
+}
+
+function majHeader() {
+  const { total, tva, nb } = calculs();
+  document.getElementById("header-total").textContent = fmt(total);
+  document.getElementById("header-tva").textContent = "TVA 5,5% : " + fmt(tva);
+  document.getElementById("nb-articles").textContent = nb + " article" + (nb > 1 ? "s" : "");
+  const badge = document.getElementById("badge-nb");
+  if (nb > 0) { badge.style.display = ""; badge.textContent = nb; }
+  else badge.style.display = "none";
+}
+
+function modifier(nom, delta) {
+  qtés[nom] = Math.max(0, qtés[nom] + delta);
+  document.getElementById("val-" + CSS.escape(nom)).textContent = qtés[nom];
+  document.getElementById("val-" + CSS.escape(nom)).className = "qte-val" + (qtés[nom] === 0 ? " zero" : "");
+  majHeader();
+}
+
+function afficherTab(tab) {
+  tabActif = tab;
+  document.getElementById("tab-produits").className = "tab" + (tab === "produits" ? " active" : "");
+  document.getElementById("tab-commande").className = "tab" + (tab === "commande" ? " active" : "");
+  render();
+}
+
+function render() {
+  const el = document.getElementById("contenu");
+  if (tabActif === "produits") {
+    el.innerHTML = PRODUITS.map(p => `
+      <div class="produit-row">
+        <div class="produit-info">
+          <div class="nom">${p.nom}</div>
+          <div class="prix">${fmt(p.prix)}</div>
+        </div>
+        <div class="qte-ctrl">
+          <button class="qte-btn" onclick="modifier('${p.nom.replace(/'/g,"\\'")}', -1)">−</button>
+          <div class="qte-val${qtés[p.nom] === 0 ? " zero" : ""}" id="val-${CSS.escape(p.nom)}">${qtés[p.nom]}</div>
+          <button class="qte-btn" onclick="modifier('${p.nom.replace(/'/g,"\\'")}', 1)">+</button>
+        </div>
+      </div>
+    `).join("");
+  } else {
+    const { lignes, total, tva } = calculs();
+    if (lignes.length === 0) {
+      el.innerHTML = `<div class="empty">Aucun article sélectionné.<br>Allez dans "Produits" pour ajouter des articles.</div>`;
+      return;
+    }
+    const rows = lignes.map(p => `
+      <div class="commande-row">
+        <div>
+          <div class="nom">${p.nom}</div>
+          <div class="detail">${qtés[p.nom]} × ${fmt(p.prix)}</div>
+        </div>
+        <div class="sous-total">${fmt(p.prix * qtés[p.nom])}</div>
+      </div>
+    `).join("");
+
+    const htNet = total - tva;
+
+    el.innerHTML = rows + `
+      <div class="recap">
+        <div class="recap-line"><span>Sous-total HT</span><span>${fmt(htNet)}</span></div>
+        <div class="recap-line"><span>TVA 5,5%</span><span>${fmt(tva)}</span></div>
+        <div class="recap-line total"><span>Total TTC</span><span>${fmt(total)}</span></div>
+      </div>
+      <button class="btn-reinit" onclick="reinit()">🗑 Réinitialiser la commande</button>
+    `;
+  }
+}
+
+function reinit() {
+  PRODUITS.forEach(p => qtés[p.nom] = 0);
+  majHeader();
+  render();
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
+render();
+majHeader();
+</script>
+</body>
+</html>
