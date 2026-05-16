@@ -232,10 +232,8 @@ function render() {
         <div class="recap-line total"><span>Total TTC</span><span>${fmt(total)}</span></div>
       </div>
 
-      <button class="btn-facture" onclick="genererFacture()">🧾 Générer la facture</button>
+      <button class="btn-facture" onclick="genererPDF()">🧾 Télécharger la facture PDF</button>
       <button class="btn-reinit" onclick="reinit()">🗑 Réinitialiser la commande</button>
-
-      <div id="facture-zone"></div>
     `;
   }
 }
@@ -246,9 +244,9 @@ function reinit() {
   render();
 }
 
-const SIRET = "528 379 035 00025"; // ← Remplace par ton vrai SIRET
+const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
 
-function genererFacture() {
+function genererPDF() {
   const { lignes, total, tva55, tva20 } = calculs();
   if (lignes.length === 0) return;
 
@@ -259,34 +257,73 @@ function genererFacture() {
   const ht = total - tva55 - tva20;
 
   const lignesHTML = lignes.map(p => `
-    <div class="row">
-      <span>${p.nom} x${qtés[p.nom]}</span>
-      <span>${fmt(p.prix * qtés[p.nom])}</span>
-    </div>
+    <tr>
+      <td>${p.nom}</td>
+      <td style="text-align:center">${qtés[p.nom]}</td>
+      <td style="text-align:right">${fmt(p.prix)}</td>
+      <td style="text-align:right">${p.tva === 0.20 ? "20%" : "5,5%"}</td>
+      <td style="text-align:right">${fmt(p.prix * qtés[p.nom])}</td>
+    </tr>
   `).join("");
 
-  document.getElementById("facture-zone").innerHTML = `
-    <div class="facture" id="facture-contenu">
-      <h3>🍜 Chez Tao</h3>
-      <div style="color:#666; font-size:12px;">SIRET : ${SIRET}</div>
-      <hr class="sep">
-      <div class="row"><span>Facture n°</span><span>${num}</span></div>
-      <div class="row"><span>Date</span><span>${date} à ${heure}</span></div>
-      <hr class="sep">
-      ${lignesHTML}
-      <hr class="sep">
-      <div class="row"><span>Sous-total HT</span><span>${fmt(ht)}</span></div>
-      <div class="row"><span>TVA 5,5% (aliments)</span><span>${fmt(tva55)}</span></div>
-      <div class="row"><span>TVA 20% (alcools)</span><span>${fmt(tva20)}</span></div>
-      <hr class="sep">
-      <div class="row bold"><span>TOTAL TTC</span><span>${fmt(total)}</span></div>
-      <hr class="sep">
-      <div style="text-align:center; color:#999; font-size:11px;">Merci de votre visite chez Tao 🙏</div>
-      <button class="btn-imprimer" onclick="window.print()">🖨 Imprimer / Partager</button>
-    </div>
-  `;
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Facture ${num}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; color: #111; font-size: 14px; }
+    h1 { font-size: 26px; margin: 0; }
+    .subtitle { color: #666; font-size: 13px; margin-bottom: 24px; }
+    .info { display: flex; justify-content: space-between; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { background: #f5f5f5; padding: 8px; text-align: left; font-size: 13px; border-bottom: 2px solid #ddd; }
+    td { padding: 8px; border-bottom: 1px solid #eee; }
+    .recap { width: 100%; max-width: 280px; margin-left: auto; }
+    .recap tr td { border: none; padding: 4px 8px; }
+    .recap tr.total td { font-weight: 700; font-size: 15px; border-top: 2px solid #111; padding-top: 8px; }
+    .footer { text-align: center; color: #999; font-size: 12px; margin-top: 40px; }
+    @media print { body { margin: 20px; } }
+  </style>
+</head>
+<body>
+  <h1>🍜 Chez Tao</h1>
+  <div class="subtitle">SIRET : ${SIRET}</div>
 
-  document.getElementById("facture-contenu").scrollIntoView({ behavior: "smooth" });
+  <div class="info">
+    <div><strong>Facture n°</strong> ${num}</div>
+    <div><strong>Date :</strong> ${date} à ${heure}</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Article</th>
+        <th style="text-align:center">Qté</th>
+        <th style="text-align:right">Prix unit.</th>
+        <th style="text-align:right">TVA</th>
+        <th style="text-align:right">Total</th>
+      </tr>
+    </thead>
+    <tbody>${lignesHTML}</tbody>
+  </table>
+
+  <table class="recap">
+    <tr><td>Sous-total HT</td><td style="text-align:right">${fmt(ht)}</td></tr>
+    <tr><td>TVA 5,5% (aliments)</td><td style="text-align:right">${fmt(tva55)}</td></tr>
+    <tr><td>TVA 20% (alcools)</td><td style="text-align:right">${fmt(tva20)}</td></tr>
+    <tr class="total"><td>TOTAL TTC</td><td style="text-align:right">${fmt(total)}</td></tr>
+  </table>
+
+  <div class="footer">Merci de votre visite chez Tao 🙏</div>
+
+  <script>window.onload = () => window.print();<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
 }
 
 if ("serviceWorker" in navigator) {
