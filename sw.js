@@ -1,5 +1,5 @@
 const CACHE = "caisse-v1";
-const FILES = ["/", "/index.html", "/manifest.json", "/icon.png"];
+const FILES = ["/caisse/", "/caisse/index.html", "/caisse/manifest.json", "/caisse/icon.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
