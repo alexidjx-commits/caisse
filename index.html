@@ -244,7 +244,7 @@ function reinit() {
   render();
 }
 
-const SIRET = "528 379 035 00025"; // ← Remplace par ton vrai SIRET
+const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
 
 function genererPDF() {
   const { lignes, total, tva55, tva20 } = calculs();
@@ -315,9 +315,9 @@ function genererPDF() {
     <tr class="total"><td>TOTAL TTC</td><td style="text-align:right">${fmt(total)}</td></tr>
   </table>
 
-  <div class="footer">Merci de votre visite chez Tao </div>
+  <div class="footer">Merci de votre visite chez Tao 🙏</div>
 
-  <script>window.onload = () => window.print();<\/script>
+
 </body>
 </html>`;
 
