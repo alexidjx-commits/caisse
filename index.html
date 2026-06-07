@@ -87,21 +87,6 @@
       background: #1a73e8; color: white; border: none;
       border-radius: 10px; cursor: pointer;
     }
-    .facture {
-      margin: 12px 16px;
-      background: white; border: 1px solid #ccc; border-radius: 12px;
-      padding: 20px; font-size: 13px; line-height: 1.8;
-    }
-    .facture h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-    .facture .sep { border: none; border-top: 1px dashed #ccc; margin: 10px 0; }
-    .facture .row { display: flex; justify-content: space-between; }
-    .facture .row.bold { font-weight: 700; font-size: 14px; }
-    .btn-imprimer {
-      display: block; width: 100%; margin-top: 12px;
-      padding: 12px; font-size: 14px; font-weight: 500;
-      background: white; color: #1a73e8; border: 1.5px solid #1a73e8;
-      border-radius: 8px; cursor: pointer;
-    }
 
     .badge {
       display: inline-block; background: #1a73e8; color: white;
@@ -120,7 +105,7 @@
     </div>
     <div class="total">
       <div class="montant" id="header-total">0,00 €</div>
-      <div class="tva" id="header-tva">TVA 5,5% : 0,00 €</div>
+      <div class="tva" id="header-tva">TVA 5,5% : 0,00 €  |  20% : 0,00 €</div>
     </div>
   </div>
 </header>
@@ -148,6 +133,8 @@ const PRODUITS = [
   { nom: "Vin",                             prix: 15.00, tva: 0.20  },
 ];
 
+const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
+
 const qtés = {};
 PRODUITS.forEach(p => qtés[p.nom] = 0);
 
@@ -167,7 +154,7 @@ function calculs() {
 }
 
 function majHeader() {
-  const { total, tva, nb } = calculs();
+  const { total, tva55, tva20, nb } = calculs();
   document.getElementById("header-total").textContent = fmt(total);
   document.getElementById("header-tva").textContent = "TVA 5,5% : " + fmt(tva55) + "  |  20% : " + fmt(tva20);
   document.getElementById("nb-articles").textContent = nb + " article" + (nb > 1 ? "s" : "");
@@ -231,8 +218,7 @@ function render() {
         <div class="recap-line"><span>TVA 20% (alcools)</span><span>${fmt(tva20)}</span></div>
         <div class="recap-line total"><span>Total TTC</span><span>${fmt(total)}</span></div>
       </div>
-
-      <button class="btn-facture" onclick="genererPDF()">🧾 Télécharger la facture PDF</button>
+      <button class="btn-facture" onclick="genererPDF()">🧾 Imprimer le ticket</button>
       <button class="btn-reinit" onclick="reinit()">🗑 Réinitialiser la commande</button>
     `;
   }
@@ -244,8 +230,6 @@ function reinit() {
   render();
 }
 
-const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
-
 function genererPDF() {
   const { lignes, total, tva55, tva20 } = calculs();
   if (lignes.length === 0) return;
@@ -256,68 +240,67 @@ function genererPDF() {
   const num = "FAC-" + now.getFullYear() + String(now.getMonth()+1).padStart(2,"0") + String(now.getDate()).padStart(2,"0") + "-" + String(now.getHours()).padStart(2,"0") + String(now.getMinutes()).padStart(2,"0");
   const ht = total - tva55 - tva20;
 
-  const lignesHTML = lignes.map(p => `
-    <tr>
-      <td>${p.nom}</td>
-      <td style="text-align:center">${qtés[p.nom]}</td>
-      <td style="text-align:right">${fmt(p.prix)}</td>
-      <td style="text-align:right">${p.tva === 0.20 ? "20%" : "5,5%"}</td>
-      <td style="text-align:right">${fmt(p.prix * qtés[p.nom])}</td>
-    </tr>
-  `).join("");
-
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Facture ${num}</title>
+  <title>Ticket ${num}</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; color: #111; font-size: 14px; }
-    h1 { font-size: 26px; margin: 0; }
-    .subtitle { color: #666; font-size: 13px; margin-bottom: 24px; }
-    .info { display: flex; justify-content: space-between; margin-bottom: 24px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th { background: #f5f5f5; padding: 8px; text-align: left; font-size: 13px; border-bottom: 2px solid #ddd; }
-    td { padding: 8px; border-bottom: 1px solid #eee; }
-    .recap { width: 100%; max-width: 280px; margin-left: auto; }
-    .recap tr td { border: none; padding: 4px 8px; }
-    .recap tr.total td { font-weight: 700; font-size: 15px; border-top: 2px solid #111; padding-top: 8px; }
-    .footer { text-align: center; color: #999; font-size: 12px; margin-top: 40px; }
-    @media print { body { margin: 20px; } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      width: 72mm;
+      margin: 0 auto;
+      padding: 4mm;
+      color: #000;
+    }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+    .sep { border-top: 1px dashed #000; margin: 4px 0; }
+    .row { display: flex; justify-content: space-between; margin: 2px 0; }
+    .row.total { font-weight: bold; font-size: 14px; margin-top: 4px; }
+    .titre { font-size: 18px; font-weight: bold; margin: 4px 0; }
+    .footer { margin-top: 8px; font-size: 11px; color: #333; }
+    @media print {
+      @page { margin: 0; size: 80mm auto; }
+      body { width: 72mm; }
+    }
   </style>
 </head>
 <body>
-  <h1>Chez Tao</h1>
-  <div class="subtitle">SIRET : ${SIRET}</div>
-
-  <div class="info">
-    <div><strong>Facture n°</strong> ${num}</div>
-    <div><strong>Date :</strong> ${date} à ${heure}</div>
+  <div class="center">
+    <div class="titre">CHEZ TAO</div>
+    <div>SIRET : ${SIRET}</div>
+    <div>${date} à ${heure}</div>
+    <div>Ticket n° ${num}</div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Article</th>
-        <th style="text-align:center">Qté</th>
-        <th style="text-align:right">Prix unit.</th>
-        <th style="text-align:right">TVA</th>
-        <th style="text-align:right">Total</th>
-      </tr>
-    </thead>
-    <tbody>${lignesHTML}</tbody>
-  </table>
+  <div class="sep"></div>
 
-  <table class="recap">
-    <tr><td>Sous-total HT</td><td style="text-align:right">${fmt(ht)}</td></tr>
-    <tr><td>TVA 5,5% (aliments)</td><td style="text-align:right">${fmt(tva55)}</td></tr>
-    <tr><td>TVA 20% (alcools)</td><td style="text-align:right">${fmt(tva20)}</td></tr>
-    <tr class="total"><td>TOTAL TTC</td><td style="text-align:right">${fmt(total)}</td></tr>
-  </table>
+  ${lignes.map(p => `
+    <div class="row">
+      <span>${p.nom}</span>
+      <span>${fmt(p.prix * qtés[p.nom])}</span>
+    </div>
+    <div style="font-size:11px; color:#555; padding-left:4px">${qtés[p.nom]} x ${fmt(p.prix)} · TVA ${p.tva === 0.20 ? "20%" : "5,5%"}</div>
+  `).join("")}
 
-  <div class="footer">Merci de votre visite chez Tao </div>
+  <div class="sep"></div>
 
+  <div class="row"><span>HT</span><span>${fmt(ht)}</span></div>
+  <div class="row"><span>TVA 5,5%</span><span>${fmt(tva55)}</span></div>
+  <div class="row"><span>TVA 20%</span><span>${fmt(tva20)}</span></div>
 
+  <div class="sep"></div>
+
+  <div class="row total"><span>TOTAL TTC</span><span>${fmt(total)}</span></div>
+
+  <div class="sep"></div>
+
+  <div class="center footer">Merci de votre visite !<br>A bientot chez Tao</div>
+
+  <script>window.onload = () => window.print();<\/script>
 </body>
 </html>`;
 
@@ -326,7 +309,7 @@ function genererPDF() {
   window.open(url, "_blank");
 }
 
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("sw.js");
 }
 
