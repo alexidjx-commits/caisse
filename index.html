@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon.png" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; }
 
     header {
@@ -34,39 +34,83 @@
     }
     .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; }
 
-    .content { padding: 0 0 80px; }
+    .content { padding: 12px 8px 80px; }
 
-    .produit-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 13px 16px; background: white; border-bottom: 1px solid #f0f0f0;
+    /* GRILLE TUILES TACTILES */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
-    .produit-info .nom { font-size: 15px; font-weight: 400; }
-    .produit-info .prix { font-size: 13px; color: #666; margin-top: 2px; }
-    .qte-ctrl { display: flex; align-items: center; }
-    .qte-btn {
-      width: 36px; height: 36px; border: 1.5px solid #1a73e8;
-      background: white; color: #1a73e8; font-size: 22px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-weight: 300;
+    .tuile {
+      position: relative;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column;
     }
-    .qte-btn:first-child { border-radius: 8px 0 0 8px; }
-    .qte-btn:last-child { border-radius: 0 8px 8px 0; }
-    .qte-val {
-      width: 40px; height: 36px; display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 600; border-top: 1.5px solid #1a73e8; border-bottom: 1.5px solid #1a73e8;
-      background: #e8f0fe; color: #1a73e8;
+    .tuile.active { border-color: #1a73e8; }
+    .tuile .img-zone {
+      flex: 1;
+      background-size: cover;
+      background-position: center;
+      background-color: #e8eef5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
     }
-    .qte-val.zero { background: #f5f5f5; color: #aaa; }
+    .tuile .info {
+      padding: 6px 8px;
+      text-align: center;
+      background: white;
+    }
+    .tuile .nom {
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .tuile .prix {
+      font-size: 11px;
+      color: #1a73e8;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+    .tuile .badge-qte {
+      position: absolute; top: 6px; right: 6px;
+      background: #1a73e8; color: white;
+      font-size: 13px; font-weight: 700;
+      min-width: 24px; height: 24px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+    }
+    .tuile:active { transform: scale(0.96); }
 
     .commande-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 13px 16px; background: white; border-bottom: 1px solid #f0f0f0;
+      margin: 0 -8px;
     }
     .commande-row .nom { font-size: 15px; font-weight: 500; }
     .commande-row .detail { font-size: 13px; color: #666; margin-top: 2px; }
     .commande-row .sous-total { font-size: 15px; font-weight: 600; }
+    .commande-row .ctrl-mini { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .btn-mini {
+      width: 26px; height: 26px; border-radius: 6px; border: 1px solid #ccc;
+      background: white; font-size: 16px; cursor: pointer; color: #1a73e8;
+    }
 
     .recap {
-      margin: 12px 16px;
+      margin: 12px 8px;
       background: white; border-radius: 12px; padding: 14px 16px;
       border: 1px solid #e0e0e0;
     }
@@ -76,13 +120,13 @@
     .empty { text-align: center; padding: 48px 16px; color: #999; font-size: 14px; }
 
     .btn-reinit {
-      display: block; width: calc(100% - 32px); margin: 8px 16px;
+      display: block; width: calc(100% - 16px); margin: 8px 8px;
       padding: 14px; font-size: 15px; font-weight: 500;
       background: white; color: #d32f2f; border: 1.5px solid #d32f2f;
       border-radius: 10px; cursor: pointer;
     }
     .btn-facture {
-      display: block; width: calc(100% - 32px); margin: 12px 16px 4px;
+      display: block; width: calc(100% - 16px); margin: 12px 8px 4px;
       padding: 14px; font-size: 15px; font-weight: 500;
       background: #1a73e8; color: white; border: none;
       border-radius: 10px; cursor: pointer;
@@ -118,22 +162,24 @@
 <div class="content" id="contenu"></div>
 
 <script>
+// Pour chaque produit : ajoute "img": "url_de_la_photo.jpg" une fois que tu envoies les photos.
+// En attendant, "emoji" est affiché comme image temporaire.
 const PRODUITS = [
-  { nom: "Plat du jour + riz",              prix: 12.00, tva: 0.055 },
-  { nom: "Plat du jour",                    prix: 11.00, tva: 0.055 },
-  { nom: "Accompagnement",                  prix: 7.50,  tva: 0.055 },
-  { nom: "Salade",                          prix: 9.00,  tva: 0.055 },
-  { nom: "Soupe",                           prix: 12.00, tva: 0.055 },
-  { nom: "Friture / rouleau de printemps",  prix: 7.50,  tva: 0.055 },
-  { nom: "Plateau 4 personnes",             prix: 20.00, tva: 0.055 },
-  { nom: "Plateau 8 personnes",             prix: 40.00, tva: 0.055 },
-  { nom: "Dessert",                         prix: 4.00,  tva: 0.055 },
-  { nom: "Soda",                            prix: 2.00,  tva: 0.055 },
-  { nom: "Bière",                           prix: 3.00,  tva: 0.20  },
-  { nom: "Vin",                             prix: 15.00, tva: 0.20  },
+  { nom: "Plat du jour + riz",              prix: 12.00, tva: 0.055, emoji: "🍛", img: null },
+  { nom: "Plat du jour",                    prix: 11.00, tva: 0.055, emoji: "🍜", img: null },
+  { nom: "Salade",                          prix: 9.00,  tva: 0.055, emoji: "🥗", img: null },
+  { nom: "Soupe",                           prix: 12.00, tva: 0.055, emoji: "🍜", img: null },
+  { nom: "Friture / rouleau de printemps / Ha Cao",  prix: 7.50,  tva: 0.055, emoji: "🥟", img: null },
+  { nom: "Plateau 4 personnes",             prix: 20.00, tva: 0.055, emoji: "🍱", img: null },
+  { nom: "Plateau 8 personnes",             prix: 40.00, tva: 0.055, emoji: "🍱", img: null },
+  { nom: "Dessert",                         prix: 4.00,  tva: 0.055, emoji: "🍮", img: null },
+  { nom: "Perle de coco",                         prix: 3.00,  tva: 0.055, emoji: "🍮", img: null },
+  { nom: "Soda",                            prix: 2.00,  tva: 0.055, emoji: "🥤", img: null },
+  { nom: "Bière",                           prix: 3.00,  tva: 0.20,  emoji: "🍺", img: null },
+  { nom: "Vin",                             prix: 15.00, tva: 0.20,  emoji: "🍷", img: null },
 ];
 
-const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
+const SIRET = "528 379 035 00025"; // ← Remplace par ton vrai SIRET
 
 const qtés = {};
 PRODUITS.forEach(p => qtés[p.nom] = 0);
@@ -163,11 +209,16 @@ function majHeader() {
   else badge.style.display = "none";
 }
 
+function ajouter(nom) {
+  qtés[nom] = (qtés[nom] || 0) + 1;
+  majHeader();
+  render();
+}
+
 function modifier(nom, delta) {
   qtés[nom] = Math.max(0, qtés[nom] + delta);
-  document.getElementById("val-" + CSS.escape(nom)).textContent = qtés[nom];
-  document.getElementById("val-" + CSS.escape(nom)).className = "qte-val" + (qtés[nom] === 0 ? " zero" : "");
   majHeader();
+  render();
 }
 
 function afficherTab(tab) {
@@ -180,19 +231,18 @@ function afficherTab(tab) {
 function render() {
   const el = document.getElementById("contenu");
   if (tabActif === "produits") {
-    el.innerHTML = PRODUITS.map(p => `
-      <div class="produit-row">
-        <div class="produit-info">
+    el.innerHTML = `<div class="grid">` + PRODUITS.map(p => `
+      <div class="tuile${qtés[p.nom] > 0 ? " active" : ""}" onclick="ajouter('${p.nom.replace(/'/g,"\\'")}')">
+        ${qtés[p.nom] > 0 ? `<div class="badge-qte">${qtés[p.nom]}</div>` : ""}
+        <div class="img-zone" style="${p.img ? `background-image:url('${p.img}')` : ""}">
+          ${p.img ? "" : p.emoji}
+        </div>
+        <div class="info">
           <div class="nom">${p.nom}</div>
           <div class="prix">${fmt(p.prix)}</div>
         </div>
-        <div class="qte-ctrl">
-          <button class="qte-btn" onclick="modifier('${p.nom.replace(/'/g,"\\'")}', -1)">−</button>
-          <div class="qte-val${qtés[p.nom] === 0 ? " zero" : ""}" id="val-${CSS.escape(p.nom)}">${qtés[p.nom]}</div>
-          <button class="qte-btn" onclick="modifier('${p.nom.replace(/'/g,"\\'")}', 1)">+</button>
-        </div>
       </div>
-    `).join("");
+    `).join("") + `</div>`;
   } else {
     const { lignes, total, tva55, tva20 } = calculs();
     if (lignes.length === 0) {
@@ -202,8 +252,13 @@ function render() {
     const rows = lignes.map(p => `
       <div class="commande-row">
         <div>
-          <div class="nom">${p.nom}</div>
-          <div class="detail">${qtés[p.nom]} × ${fmt(p.prix)} · TVA ${p.tva === 0.20 ? "20%" : "5,5%"}</div>
+          <div class="nom">${p.emoji} ${p.nom}</div>
+          <div class="detail">${fmt(p.prix)} / unité · TVA ${p.tva === 0.20 ? "20%" : "5,5%"}</div>
+          <div class="ctrl-mini">
+            <button class="btn-mini" onclick="modifier('${p.nom.replace(/'/g,"\\'")}', -1)">−</button>
+            <span style="font-weight:600">${qtés[p.nom]}</span>
+            <button class="btn-mini" onclick="modifier('${p.nom.replace(/'/g,"\\'")}', 1)">+</button>
+          </div>
         </div>
         <div class="sous-total">${fmt(p.prix * qtés[p.nom])}</div>
       </div>
