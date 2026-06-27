@@ -19,38 +19,31 @@
       padding: 14px 16px 10px;
       position: sticky; top: 0; z-index: 10;
     }
-    header .row { display: flex; justify-content: space-between; align-items: flex-start; }
-    header h1 { font-size: 18px; font-weight: 600; }
-    header .subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
-    header .total { text-align: right; }
-    header .total .montant { font-size: 22px; font-weight: 700; }
-    header .total .tva { font-size: 11px; opacity: 0.85; }
+    header { padding: 8px 10px 6px; }
+    header h1 { font-size: 14px; }
+    header .subtitle { font-size: 10px; }
+    header .total .montant { font-size: 17px; }
+    header .total .tva { font-size: 9px; }
 
-    .tabs { display: flex; background: white; border-bottom: 1px solid #e0e0e0; }
-    .tab {
-      flex: 1; padding: 12px 0; font-size: 14px; font-weight: 500;
-      border: none; background: none; cursor: pointer; color: #666;
-      border-bottom: 3px solid transparent;
-    }
-    .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+    .tab { padding: 7px 0; font-size: 12px; }
 
-    .content { padding: 12px 8px 80px; }
+    .content { padding: 8px 6px 80px; }
 
     /* GRILLE TUILES TACTILES */
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
     }
     .tuile {
       position: relative;
       background: white;
-      border-radius: 14px;
+      border-radius: 10px;
       overflow: hidden;
       border: 2px solid transparent;
       cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      aspect-ratio: 1 / 1;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      aspect-ratio: 1 / 0.95;
       display: flex;
       flex-direction: column;
     }
@@ -61,37 +54,37 @@
       background-position: center;
       background-color: #e8eef5;
       display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
+      font-size: 22px;
     }
     .tuile .info {
-      padding: 6px 8px;
+      padding: 3px 4px 4px;
       text-align: center;
       background: white;
     }
     .tuile .nom {
-      font-size: 11.5px;
+      font-size: 9.5px;
       font-weight: 600;
-      line-height: 1.25;
+      line-height: 1.15;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
     .tuile .prix {
-      font-size: 11px;
+      font-size: 9px;
       color: #1a73e8;
       font-weight: 700;
-      margin-top: 1px;
+      margin-top: 0;
     }
     .tuile .badge-qte {
-      position: absolute; top: 6px; right: 6px;
+      position: absolute; top: 3px; right: 3px;
       background: #1a73e8; color: white;
-      font-size: 13px; font-weight: 700;
-      min-width: 24px; height: 24px;
-      border-radius: 12px;
+      font-size: 11px; font-weight: 700;
+      min-width: 18px; height: 18px;
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      padding: 0 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      padding: 0 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
     }
     .tuile:active { transform: scale(0.96); }
 
@@ -167,19 +160,19 @@
 const PRODUITS = [
   { nom: "Plat du jour + riz",              prix: 12.00, tva: 0.055, emoji: "🍛", img: null },
   { nom: "Plat du jour",                    prix: 11.00, tva: 0.055, emoji: "🍜", img: null },
-  { nom: "Salade",                          prix: 9.00,  tva: 0.055, emoji: "🥗", img: null },
-  { nom: "Soupe",                           prix: 12.00, tva: 0.055, emoji: "🍜", img: null },
-  { nom: "Friture / rouleau de printemps / Ha Cao",  prix: 7.50,  tva: 0.055, emoji: "🥟", img: null },
+  { nom: "Accompagnement",                  prix: 7.50,  tva: 0.055, emoji: "🥗", img: null },
+  { nom: "Salade",                          prix: 9.00,  tva: 0.055, emoji: "🥬", img: null },
+  { nom: "Soupe",                           prix: 12.00, tva: 0.055, emoji: "🍲", img: null },
+  { nom: "Friture / rouleau de printemps",  prix: 7.50,  tva: 0.055, emoji: "🥟", img: null },
   { nom: "Plateau 4 personnes",             prix: 20.00, tva: 0.055, emoji: "🍱", img: null },
   { nom: "Plateau 8 personnes",             prix: 40.00, tva: 0.055, emoji: "🍱", img: null },
   { nom: "Dessert",                         prix: 4.00,  tva: 0.055, emoji: "🍮", img: null },
-  { nom: "Perle de coco",                         prix: 3.00,  tva: 0.055, emoji: "🍮", img: null },
   { nom: "Soda",                            prix: 2.00,  tva: 0.055, emoji: "🥤", img: null },
   { nom: "Bière",                           prix: 3.00,  tva: 0.20,  emoji: "🍺", img: null },
   { nom: "Vin",                             prix: 15.00, tva: 0.20,  emoji: "🍷", img: null },
 ];
 
-const SIRET = "528 379 035 00025"; // ← Remplace par ton vrai SIRET
+const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
 
 const qtés = {};
 PRODUITS.forEach(p => qtés[p.nom] = 0);
