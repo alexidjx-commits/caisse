@@ -65,30 +65,26 @@
       background-size: cover;
       background-position: center;
       background-color: #e8eef5;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       min-height: 0;
-    }
-    .tuile .info {
-      padding: 2px 3px 3px;
+      padding: 4px;
       text-align: center;
-      background: white;
-      flex-shrink: 0;
     }
-    .tuile .nom {
-      font-size: 9px;
-      font-weight: 600;
-      line-height: 1.1;
+    .tuile .img-zone .nom {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #111;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .tuile .prix {
-      font-size: 8px;
+    .tuile .img-zone .prix {
+      font-size: 11px;
       color: #1a73e8;
-      font-weight: 700;
-      margin-top: 0;
+      font-weight: 600;
+      margin-top: 8px;
     }
     .tuile .badge-qte {
       position: absolute; top: 2px; right: 2px;
@@ -177,7 +173,7 @@ const PRODUITS = [
   { nom: "Accompagnement",                  prix: 7.50,  tva: 0.055, emoji: "🥗", img: null },
   { nom: "Salade",                          prix: 9.00,  tva: 0.055, emoji: "🥬", img: null },
   { nom: "Soupe",                           prix: 12.00, tva: 0.055, emoji: "🍲", img: null },
-  { nom: "Friture / rouleau de printemps",  prix: 7.50,  tva: 0.055, emoji: "🥟", img: null },
+  { nom: "Friture / rouleau de printemps / Ha cao",  prix: 7.50,  tva: 0.055, emoji: "🥟", img: null },
   { nom: "Plateau 4 personnes",             prix: 20.00, tva: 0.055, emoji: "🍱", img: null },
   { nom: "Plateau 8 personnes",             prix: 40.00, tva: 0.055, emoji: "🍱", img: null },
   { nom: "Dessert",                         prix: 4.00,  tva: 0.055, emoji: "🍮", img: null },
@@ -186,7 +182,7 @@ const PRODUITS = [
   { nom: "Vin",                             prix: 15.00, tva: 0.20,  emoji: "🍷", img: null },
 ];
 
-const SIRET = "000 000 000 00000"; // ← Remplace par ton vrai SIRET
+const SIRET = "528379035"; // ← Remplace par ton vrai SIRET
 
 const qtés = {};
 PRODUITS.forEach(p => qtés[p.nom] = 0);
@@ -242,9 +238,6 @@ function render() {
       <div class="tuile${qtés[p.nom] > 0 ? " active" : ""}" onclick="ajouter('${p.nom.replace(/'/g,"\\'")}')">
         ${qtés[p.nom] > 0 ? `<div class="badge-qte">${qtés[p.nom]}</div>` : ""}
         <div class="img-zone" style="${p.img ? `background-image:url('${p.img}')` : ""}">
-          ${p.img ? "" : p.emoji}
-        </div>
-        <div class="info">
           <div class="nom">${p.nom}</div>
           <div class="prix">${fmt(p.prix)}</div>
         </div>
@@ -333,7 +326,7 @@ function genererPDF() {
 <body>
   <div class="center">
     <div class="titre">CHEZ TAO</div>
-    <div>SIRET : ${SIRET}</div>
+    <div>SIREN : ${SIRET}</div>
     <div>${date} à ${heure}</div>
     <div>Ticket n° ${num}</div>
   </div>
